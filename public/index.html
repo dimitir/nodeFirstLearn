@@ -69,7 +69,7 @@
 
             tr.append(th_id, th_name, th_age, th_options);
 
-            return tr
+            return tr;
         }
 
         const getUsers = async() => {
@@ -112,6 +112,7 @@
                 let tr = setDataRow(user._id, user.name, user.age);
                 tbody.prepend(tr);
             }
+
         }
 
 
@@ -129,6 +130,7 @@
             });
 
             const user = await response.json();
+            console.log('user');
             const rowEditLink = document.querySelector('[data-id="' + userId + '"]');
             const rowEdit = rowEditLink.closest('tr');
             rowEdit.querySelectorAll('th')[1].innerHTML = userName;
@@ -154,12 +156,24 @@
             const id = this.elements["id"].value;
             const name = this.elements["name"].value;
             const age = this.elements["age"].value;
+            console.log(id, name, age);
             this.reset();
             if (id == 0) {
                 addUser(name, age);
             } else {
                 editUser(id, name, age);
             }
+        });
+
+
+        // сброс значений формы
+
+        document.querySelector('#reset').addEventListener('click', function(e) {
+            event.preventDefault();
+            let form = document.forms["userForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+            console.log(form);
         });
 
         document.querySelector('table').addEventListener('click', function(e) {

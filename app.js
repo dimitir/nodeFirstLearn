@@ -20,7 +20,7 @@ app.use(express.static(__dirname + '/public'));
 
 mongoose.connect('mongodb://localhost:27017/usersdb', { useNewUrlParser: true }, err => {
     if (err) return console.log(err);
-    app.listen(3001, () => {
+    app.listen(3000, () => {
         console.log('Сервер ожидает ответа...');
     });
 });
@@ -47,12 +47,14 @@ app.get('/api/users/:id', (req, res) => {
 
 // app.use(bodyParser());
 
-
+// add user
 app.post('/api/users', jsonParser, (req, res) => {
     if (!req.body) return res.sendStatus(400);
     const userName = req.body.name;
     const userAge = req.body.age;
+
     let user = new User({ name: userName, age: userAge });
+
     user.save((err) => {
         if (err) return console.log(err);
         res.send(user)
