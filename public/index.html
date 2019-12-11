@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Список пользователей</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <h2>Список пользователей</h2>
+    <form name="userForm" id='userForm'>
+        <input type="hidden" name="id" value="0" />
+        <div class="form-group">
+            <label for="name">Имя:</label>
+            <input class="form-control" name="name" />
+        </div>
+        <div class="form-group">
+            <label for="age">Возраст:</label>
+            <input class="form-control" name="age" />
+        </div>
+        <div class="panel-body">
+            <button type="submit" class="btn btn-sm btn-primary ">Сохранить</button>
+            <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+        </div>
+    </form>
+
+    <table class="table table-condensed table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Имя</th>
+                <th>возраст</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+
+    <script>
+        let tbody = document.querySelector(' table tbody');
+
+        let setDataRow = (id, name, age) => {
+            let tr = document.createElement('tr');
+            let th_id = document.createElement('th');
+            let th_name = document.createElement('th');
+            let th_age = document.createElement('th');
+            let th_options = document.createElement('th');
+
+            let a_edit = document.createElement('a');
+            a_edit.classList.add("editLink");
+            a_edit.setAttribute('data-id', id);
+            a_edit.setAttribute('data-action', 'edit');
+            let a_delete = document.createElement('a');
+            a_delete.classList.add("deleteLink");
+            a_delete.setAttribute('data-id', id);
+            a_delete.setAttribute('data-action', 'delete');
+
+            th_id.append(id);
+            th_name.append(name);
+            th_age.append(age);
+            a_edit.append('Edit');
+            a_delete.append('Delete');
+            th_options.append(a_edit, ' | ', a_delete);
+
+            tr.append(th_id, th_name, th_age, th_options);
+
+            return tr
+        }
+
+        const getUsers = async() => {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+            let tr = '';
+            users.map(x => {
+                tr = setDataRow(x['_id'], x['name'], x['age']);
+                tbody.append(tr);
+            })
+        }
+        getUsers();
+
+
+
+        const getUserOne = async(id) => {
+            const response = await fetch('/api/users/' + id);
+            const userOne = await response.json();
+            console.log(userOne);
+            let formUser = document.forms['userForm'];
+            formUser.elements['id'].value = userOne._id;
+            formUser.elements['name'].value = userOne.name;
+            formUser.elements['age'].value = userOne.age;
+        }
+
+        let addUser = async(userName, userAge) => {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                body: JSON.stringify({
+                    name: userName,
+                    age: userAge
+                })
+            });
+            const user = await response.json();
+
+            if (response.ok) {
+                let tr = setDataRow(user._id, user.name, user.age);
+                tbody.prepend(tr);
+            }
+        }
+
+
+        const editUser = async(userId, userName, userAge) => {
+            const response = await fetch('/api/users', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                body: JSON.stringify({
+                    id: userId,
+                    name: userName,
+                    age: userAge
+                })
+            });
+
+            const user = await response.json();
+            const rowEditLink = document.querySelector('[data-id="' + userId + '"]');
+            const rowEdit = rowEditLink.closest('tr');
+            rowEdit.querySelectorAll('th')[1].innerHTML = userName;
+            rowEdit.querySelectorAll('th')[2].innerHTML = userAge;
+        }
+
+        const deleteUser = async(userId) => {
+            const response = await fetch('api/users/' + userId, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            });
+            const rowEditLink = document.querySelector('[data-id="' + userId + '"]');
+            const rowEdit = rowEditLink.closest('tr');
+            rowEdit.remove();
+
+        }
+
+        document.getElementById("userForm").addEventListener('submit', function(e) {
+
+            event.preventDefault();
+            const id = this.elements["id"].value;
+            const name = this.elements["name"].value;
+            const age = this.elements["age"].value;
+            this.reset();
+            if (id == 0) {
+                addUser(name, age);
+            } else {
+                editUser(id, name, age);
+            }
+        });
+
+        document.querySelector('table').addEventListener('click', function(e) {
+            const elementLink = event.target.closest('a');
+            if (!elementLink) return;
+
+            const elementData = elementLink.getAttribute('data-action');
+            const userId = elementLink.getAttribute('data-id');
+            if (elementData === 'edit') {
+                getUserOne(userId)
+            }
+
+            if (elementData === 'delete') {
+                deleteUser(userId)
+            }
+
+        })
+    </script>
+
+
+</body>
+
+</html>
